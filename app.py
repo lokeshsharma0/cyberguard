@@ -1,5 +1,13 @@
 import gradio as gr
 from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+import os
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Read the built-in token that Hugging Face Spaces automatically provide
+hf_token = os.environ.get("HF_TOKEN")
+
+model = AutoModelForCausalLM.from_pretrained("Lowkey333/cyberguard", token=hf_token)
+tokenizer = AutoTokenizer.from_pretrained("Lowkey333/cyberguard", token=hf_token)
 
 # Replace with your model path/name
 MODEL_NAME = "cyberguard"
