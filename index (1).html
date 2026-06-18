@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gurugram Police AI Assistant</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --saffron: #FF9933;
+    --white: #FFFFFF;
+    --green: #138808;
+    --navy: #000080;
+    --dark-navy: #00004d;
+    --light-bg: rgba(255,255,255,0.93);
+    --glass: rgba(255,255,255,0.15);
+    --glass-border: rgba(255,255,255,0.35);
+    --text-dark: #1a1a2e;
+    --text-muted: #4a4a6a;
+    --shadow: 0 8px 32px rgba(0,0,128,0.18);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    background: #0a0a3a;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* === INDIAN FLAG BACKGROUND === */
+  .flag-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .flag-saffron { flex: 1; background: #FF9933; opacity: 0.82; }
+  .flag-white   { flex: 1; background: #FFFFFF; opacity: 0.82; }
+  .flag-green   { flex: 1; background: #138808; opacity: 0.82; }
+
+  /* Ashoka Chakra watermark */
+  .chakra-watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 260px;
+    height: 260px;
+    opacity: 0.10;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Dark overlay for readability */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 60, 0.55);
+    z-index: 2;
+  }
+
+  /* === LAYOUT === */
+  .page {
+    position: relative;
+    z-index: 3;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* === HEADER === */
+  header {
+    background: linear-gradient(135deg, rgba(0,0,80,0.97) 0%, rgba(0,0,128,0.97) 100%);
+    border-bottom: 3px solid var(--saffron);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+
+  .logo-wrap {
+    width: 70px;
+    height: 70px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--saffron);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .logo-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 4px;
+  }
+
+  /* Fallback badge if logo doesn't load */
+  .logo-fallback {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--navy);
+    text-align: center;
+    line-height: 1.2;
+    display: none;
+  }
+
+  .header-text { flex: 1; }
+  .header-text h1 {
+    color: white;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .header-text p {
+    color: #aac4ff;
+    font-size: 0.78rem;
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+  }
+
+  .header-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+  }
+  .badge {
+    background: rgba(255,153,51,0.2);
+    border: 1px solid var(--saffron);
+    color: #ffd699;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.4px;
+  }
+  .badge.green-badge {
+    background: rgba(19,136,8,0.25);
+    border-color: #4cda3a;
+    color: #a8f5a0;
+  }
+
+  /* === MAIN CONTENT === */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px 16px 16px;
+    gap: 16px;
+  }
+
+  /* === QUICK TOPICS === */
+  .quick-topics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+  }
+
+  .topic-card {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+  }
+  .topic-card:hover {
+    background: rgba(255,153,51,0.25);
+    border-color: var(--saffron);
+    transform: translateY(-1px);
+  }
+  .topic-card .icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  .topic-card span {
+    font-size: 0.82rem;
+    line-height: 1.3;
+    font-weight: 500;
+  }
+
+  /* === CHAT BOX === */
+  .chat-container {
+    background: rgba(255,255,255,0.10);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    height: 420px;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+  }
+
+  .chat-header {
+    background: rgba(0,0,100,0.6);
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-size: 0.82rem;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #4cda3a;
+    box-shadow: 0 0 6px #4cda3a;
+  }
+
+  #chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+
+  #chat-messages::-webkit-scrollbar { width: 4px; }
+  #chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 4px; }
+
+  .msg {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    animation: fadeUp 0.25s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.bot {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .msg.user {
+    background: linear-gradient(135deg, #FF9933, #e07000);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+    font-weight: 500;
+  }
+  .msg.bot .label {
+    font-size: 0.7rem;
+    color: #aac4ff;
+    margin-bottom: 4px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* typing indicator */
+  .typing-dots {
+    display: flex; gap: 5px; padding: 4px 2px; align-items: center;
+  }
+  .typing-dots span {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%,60%,100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  /* === INPUT AREA === */
+  .input-area {
+    padding: 12px 14px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,80,0.4);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  #user-input {
+    flex: 1;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    color: white;
+    font-size: 0.9rem;
+    padding: 10px 14px;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    min-height: 42px;
+    max-height: 100px;
+    line-height: 1.4;
+    transition: border-color 0.2s;
+  }
+  #user-input::placeholder { color: rgba(255,255,255,0.4); }
+  #user-input:focus { border-color: var(--saffron); }
+
+  #send-btn {
+    background: linear-gradient(135deg, #FF9933, #cc7700);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    white-space: nowrap;
+    height: 42px;
+  }
+  #send-btn:hover:not(:disabled) { opacity: 0.88; transform: scale(1.02); }
+  #send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* === FOOTER === */
+  footer {
+    text-align: center;
+    color: rgba(255,255,255,0.45);
+    font-size: 0.72rem;
+    padding: 12px;
+    z-index: 3;
+    position: relative;
+  }
+
+  /* === CONFIG PANEL (hidden, shown via modal) === */
+  .config-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    background: rgba(0,0,100,0.85);
+    border: 1px solid var(--glass-border);
+    color: white;
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+  }
+  .config-btn:hover { background: rgba(0,0,150,0.9); }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 20;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #0d0d50;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    padding: 24px;
+    width: min(90vw, 440px);
+    color: white;
+  }
+  .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #ffd699; }
+  .modal label { font-size: 0.8rem; color: #aac4ff; display: block; margin-bottom: 6px; }
+  .modal input, .modal textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 8px;
+    color: white;
+    padding: 9px 12px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 14px;
+  }
+  .modal input:focus, .modal textarea:focus { border-color: var(--saffron); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+  .btn-save {
+    background: linear-gradient(135deg, #FF9933, #cc7700);
+    border: none; border-radius: 8px;
+    color: white; font-weight: 600;
+    padding: 9px 20px; cursor: pointer; font-size: 0.85rem;
+  }
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 8px; color: white;
+    padding: 9px 16px; cursor: pointer; font-size: 0.85rem;
+  }
+  .info-box {
+    background: rgba(255,153,51,0.12);
+    border: 1px solid rgba(255,153,51,0.3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    color: #ffd699;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 560px) {
+    header { padding: 10px 14px; gap: 12px; }
+    .header-text h1 { font-size: 1.05rem; }
+    .header-badges { display: none; }
+    .logo-wrap { width: 54px; height: 54px; }
+    main { padding: 14px 10px; }
+    .chat-container { height: 360px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Indian Flag Background -->
+<div class="flag-bg">
+  <div class="flag-saffron"></div>
+  <div class="flag-white"></div>
+  <div class="flag-green"></div>
+</div>
+
+<!-- Ashoka Chakra watermark SVG -->
+<svg class="chakra-watermark" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#000080" stroke-width="6"/>
+  <circle cx="100" cy="100" r="10" fill="#000080"/>
+  <g stroke="#000080" stroke-width="2.5">
+    <!-- 24 spokes -->
+    <line x1="100" y1="10"  x2="100" y2="36"/>
+    <line x1="100" y1="164" x2="100" y2="190"/>
+    <line x1="10"  y1="100" x2="36"  y2="100"/>
+    <line x1="164" y1="100" x2="190" y2="100"/>
+    <line x1="27"  y1="27"  x2="46"  y2="46"/>
+    <line x1="154" y1="154" x2="173" y2="173"/>
+    <line x1="173" y1="27"  x2="154" y2="46"/>
+    <line x1="46"  y1="154" x2="27"  y2="173"/>
+    <line x1="62"  y1="12"  x2="68"  y2="37"/>
+    <line x1="132" y1="163" x2="138" y2="188"/>
+    <line x1="12"  y1="62"  x2="37"  y2="68"/>
+    <line x1="163" y1="132" x2="188" y2="138"/>
+    <line x1="138" y1="12"  x2="132" y2="37"/>
+    <line x1="62"  y1="163" x2="68"  y2="188"/>
+    <line x1="12"  y1="138" x2="37"  y2="132"/>
+    <line x1="163" y1="62"  x2="188" y2="68"/>
+    <line x1="32"  y1="49"  x2="50"  y2="60"/>
+    <line x1="150" y1="140" x2="168" y2="151"/>
+    <line x1="49"  y1="168" x2="60"  y2="150"/>
+    <line x1="140" y1="50"  x2="151" y2="32"/>
+    <line x1="168" y1="49"  x2="150" y2="60"/>
+    <line x1="50"  y1="140" x2="32"  y2="151"/>
+    <line x1="140" y1="150" x2="151" y2="168"/>
+    <line x1="49"  y1="32"  x2="60"  y2="50"/>
+  </g>
+</svg>
+
+<div class="overlay"></div>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-wrap">
+      <!-- Replace src with actual Gurugram Police logo URL -->
+      <img
+        src="https://upload.wikimedia.org/wikipedia/en/thumb/4/4d/Haryana_Police_Logo.png/200px-Haryana_Police_Logo.png"
+        alt="Gurugram Police Logo"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+      />
+      <div class="logo-fallback">🛡️<br/>GRP</div>
+    </div>
+    <div class="header-text">
+      <h1>Gurugram Police AI Assistant</h1>
+      <p>Haryana Police | साइबर सिटी की सुरक्षा · Cyber City Ki Suraksha</p>
+    </div>
+    <div class="header-badges">
+      <span class="badge">🇮🇳 Official AI Portal</span>
+      <span class="badge green-badge">🟢 Available 24/7</span>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- QUICK TOPICS -->
+    <div class="quick-topics">
+      <div class="topic-card" onclick="sendQuick('How do I file an FIR in Gurugram?')">
+        <span class="icon">📋</span><span>File an FIR</span>
+      </div>
+      <div class="topic-card" onclick="sendQuick('What are the emergency contact numbers for Gurugram Police?')">
+        <span class="icon">📞</span><span>Emergency Contacts</span>
+      </div>
+      <div class="topic-card" onclick="sendQuick('How to report cybercrime in Gurugram?')">
+        <span class="icon">💻</span><span>Cybercrime Help</span>
+      </div>
+      <div class="topic-card" onclick="sendQuick('What documents are needed for a passport police verification?')">
+        <span class="icon">📄</span><span>Passport Verification</span>
+      </div>
+      <div class="topic-card" onclick="sendQuick('Where are the police stations in Gurugram?')">
+        <span class="icon">🏢</span><span>Police Stations</span>
+      </div>
+      <div class="topic-card" onclick="sendQuick('How to get a character certificate from Gurugram Police?')">
+        <span class="icon">📜</span><span>Character Certificate</span>
+      </div>
+    </div>
+
+    <!-- CHAT BOX -->
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="status-dot"></div>
+        <span>AI Assistant · Powered by your HuggingFace Model</span>
+      </div>
+
+      <div id="chat-messages">
+        <div class="msg bot">
+          <div class="label">GURUGRAM POLICE AI</div>
+          नमस्ते! I'm the Gurugram Police AI Assistant. I can help you with police FAQs, FIR procedures, emergency contacts, cybercrime reporting, and more. How can I assist you today? 🙏
+        </div>
+      </div>
+
+      <div class="input-area">
+        <textarea
+          id="user-input"
+          rows="1"
+          placeholder="Ask about police services, FIR, emergency contacts..."
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button id="send-btn" onclick="sendMessage()">Send ➤</button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Gurugram Police AI Assistant · For emergencies dial <strong style="color:#FF9933">112</strong> · This AI provides general information only
+  </footer>
+</div>
+
+<!-- Config Button -->
+<button class="config-btn" onclick="document.getElementById('configModal').classList.add('open')">
+  ⚙️ Setup AI Model
+</button>
+
+<!-- Config Modal -->
+<div class="modal-overlay" id="configModal">
+  <div class="modal">
+    <h3>🤗 HuggingFace Model Settings</h3>
+    <div class="info-box">
+      Paste your <strong>HuggingFace Space API URL</strong> below. Your model must be deployed as a <strong>Gradio Space</strong> on HuggingFace (free). The API key is optional for public spaces.
+    </div>
+    <label>HuggingFace Space API URL</label>
+    <input type="text" id="hf-url" placeholder="https://your-username-your-space.hf.space/api/predict" />
+    <label>API Token (optional, for private spaces)</label>
+    <input type="password" id="hf-token" placeholder="hf_xxxxxxxxxxxxxxxxxx" />
+    <label>System Prompt (optional)</label>
+    <textarea id="sys-prompt" rows="3" placeholder="You are a helpful Gurugram Police assistant..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('configModal').classList.remove('open')">Cancel</button>
+      <button class="btn-save" onclick="saveConfig()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────
+  let HF_URL    = localStorage.getItem('hf_url')    || '';
+  let HF_TOKEN  = localStorage.getItem('hf_token')  || '';
+  let SYS_PROMPT = localStorage.getItem('sys_prompt') ||
+    'You are a helpful, professional AI assistant for Gurugram Police, Haryana, India. Answer questions about police services, FIR filing, emergency contacts, cybercrime reporting, passport verification, character certificates, and general law enforcement FAQs. Be concise, accurate, and professional. If you don\'t know something, direct them to call 112 or visit the nearest police station.';
+
+  // Pre-fill modal
+  document.getElementById('hf-url').value    = HF_URL;
+  document.getElementById('hf-token').value  = HF_TOKEN;
+  document.getElementById('sys-prompt').value = SYS_PROMPT;
+
+  function saveConfig() {
+    HF_URL     = document.getElementById('hf-url').value.trim();
+    HF_TOKEN   = document.getElementById('hf-token').value.trim();
+    SYS_PROMPT = document.getElementById('sys-prompt').value.trim();
+    localStorage.setItem('hf_url',    HF_URL);
+    localStorage.setItem('hf_token',  HF_TOKEN);
+    localStorage.setItem('sys_prompt', SYS_PROMPT);
+    document.getElementById('configModal').classList.remove('open');
+    addMsg('bot', '✅ Model connected! Ask me anything about Gurugram Police services.');
+  }
+
+  // ── CHAT ────────────────────────────────────────────────
+  const messagesEl = document.getElementById('chat-messages');
+  const inputEl    = document.getElementById('user-input');
+  const sendBtn    = document.getElementById('send-btn');
+  let conversationHistory = [];
+
+  function addMsg(role, text) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    if (role === 'bot') {
+      div.innerHTML = '<div class="label">GURUGRAM POLICE AI</div>' + escapeHtml(text);
+    } else {
+      div.textContent = text;
+    }
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  function addTyping() {
+    const div = document.createElement('div');
+    div.className = 'msg bot';
+    div.id = 'typing-indicator';
+    div.innerHTML = '<div class="label">GURUGRAM POLICE AI</div><div class="typing-dots"><span></span><span></span><span></span></div>';
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br/>');
+  }
+
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+    inputEl.value = '';
+    autoResize(inputEl);
+    sendBtn.disabled = true;
+
+    addMsg('user', text);
+    conversationHistory.push({ role: 'user', content: text });
+
+    addTyping();
+
+    // If no HF URL configured, use a smart fallback
+    if (!HF_URL) {
+      removeTyping();
+      const fallback = getFallbackAnswer(text);
+      addMsg('bot', fallback);
+      conversationHistory.push({ role: 'assistant', content: fallback });
+      sendBtn.disabled = false;
+      return;
+    }
+
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (HF_TOKEN) headers['Authorization'] = 'Bearer ' + HF_TOKEN;
+
+      // Standard Gradio /api/predict endpoint format
+      const body = JSON.stringify({
+        data: [
+          SYS_PROMPT,
+          conversationHistory.map(m => m.content).slice(-10).join('\n'),
+          text
+        ]
+      });
+
+      const res = await fetch(HF_URL, { method: 'POST', headers, body });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const json = await res.json();
+      // Gradio returns { data: ["response"] }
+      const reply = json.data?.[0] || json.generated_text || json.response || JSON.stringify(json);
+
+      removeTyping();
+      addMsg('bot', reply);
+      conversationHistory.push({ role: 'assistant', content: reply });
+
+    } catch (err) {
+      removeTyping();
+      addMsg('bot', '⚠️ Could not reach your model. Please check the API URL in ⚙️ Setup. Error: ' + err.message + '\n\nFor emergencies, call 112.');
+    }
+
+    sendBtn.disabled = false;
+  }
+
+  function sendQuick(text) {
+    inputEl.value = text;
+    sendMessage();
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+  }
+
+  // ── SMART FALLBACK (when no model configured) ──────────
+  function getFallbackAnswer(q) {
+    const ql = q.toLowerCase();
+    if (ql.includes('fir') || ql.includes('complaint'))
+      return 'To file an FIR in Gurugram:\n1. Visit the nearest police station\n2. You can also file online at: https://haryanapolice.gov.in\n3. Call 112 for urgent assistance\n4. For women: dial 1091\n\nRequired: ID proof, incident details, witnesses (if any).';
+    if (ql.includes('emergency') || ql.includes('contact') || ql.includes('number'))
+      return '📞 Gurugram Police Emergency Numbers:\n• Police: 112\n• Women Helpline: 1091\n• Cybercrime: 1930\n• Traffic Police: 0124-2305250\n• Gurugram CP Office: 0124-2336000\n• Senior Citizen Help: 14567';
+    if (ql.includes('cyber') || ql.includes('online fraud') || ql.includes('scam'))
+      return '💻 To report cybercrime:\n1. Call National Cyber Helpline: 1930\n2. File online at: https://cybercrime.gov.in\n3. Visit Gurugram Cyber Crime Unit, DLF Phase-1\n\nPreserve all evidence: screenshots, emails, transaction IDs.';
+    if (ql.includes('passport') || ql.includes('verification'))
+      return '📄 Passport Police Verification in Gurugram:\n1. Apply online at passportindia.gov.in\n2. Police verification is auto-initiated after appointment\n3. Documents: Address proof, ID proof, application copy\n4. Timeframe: 7-21 working days\n\nContact: 0124-2305250';
+    if (ql.includes('station') || ql.includes('thana'))
+      return '🏢 Major Police Stations in Gurugram:\n• Sector 40 PS: 0124-2336040\n• DLF Phase 1: 0124-4051091\n• Sohna Road PS: 0124-2280012\n• Manesar PS: 0124-2290100\n• Palam Vihar PS: 0124-2336045\n\nFull list: haryanapolice.gov.in';
+    if (ql.includes('character') || ql.includes('certificate'))
+      return '📜 Character Certificate from Gurugram Police:\n1. Apply at your local police station\n2. OR apply online at saralharyana.gov.in\n3. Required docs: Aadhaar, address proof, photos\n4. Processing: 7-15 working days\n5. Fee: ₹50 (approx)\n\nBring original + photocopy of all documents.';
+    return '⚙️ Please set up your HuggingFace model in the Setup panel (bottom right) to get AI-powered answers.\n\nFor immediate help:\n• Emergency: 112\n• Cyber Crime: 1930\n• Women Helpline: 1091\n• Website: haryanapolice.gov.in';
+  }
+</script>
+</body>
+</html>
