@@ -1,29 +1,30 @@
 import gradio as gr
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM
 import os
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# Read the built-in token that Hugging Face Spaces automatically provide
+# 1. Read the built-in token that Hugging Face Spaces automatically provide
 hf_token = os.environ.get("HF_TOKEN")
 
-model = AutoModelForCausalLM.from_pretrained("Lowkey333/cyberguard", token=hf_token)
-tokenizer = AutoTokenizer.from_pretrained("Lowkey333/cyberguard", token=hf_token)
+# 2. Define the exact model path (Make sure CYBERGUARD capitalization matches your model repo name!)
+MODEL_ID = "Lowkey333/cyberguard" 
 
-# Replace with your model path/name
-MODEL_NAME = "cyberguard"
+# 3. Load Tokenizer and Model securely
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=hf_token)
+model = AutoModelForCausalLM.from_pretrained(MODEL_ID, token=hf_token)
 
-tokenizer = AutoTokenizer.from_pretrained(cyberguard)
-model = AutoModelForCausalLM.from_pretrained(cyberguard)
-
+# 4. Define Chat Logic
 def chat(system_prompt, history, user_message):
     prompt = f"{system_prompt}\n\nUser: {user_message}\nAssistant:"
     inputs = tokenizer(prompt, return_tensors="pt", max_length=512, truncation=True)
+    
     outputs = model.generate(**inputs, max_new_tokens=300, temperature=0.7)
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    
     # Extract only the assistant's reply
     reply = response.split("Assistant:")[-1].strip()
     return reply
 
+# 5. Launch Gradio Interface
 iface = gr.Interface(
     fn=chat,
     inputs=[
