@@ -17,6 +17,6 @@ jobs:
           
       - name: Push to Hub
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_TOKEN: ${{ secrets.hf_token }}
         run: |
           git push --force https://lokeshsharma0:$HF_TOKEN@huggingface.co/spaces/lokeshsharma0/cyberguard main
