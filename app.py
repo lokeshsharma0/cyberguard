@@ -6,14 +6,13 @@ from huggingface_hub import hf_hub_download
 # 1. Authenticate using your token
 hf_token = os.environ.get("HF_TOKEN")
 
-# 2. Download your exact GGUF file from your model repo
-print("Downloading your qwen-cyber-q4.gguf file...")
+# 2. Change the repo_id if your trained file is in custom or expert!
+print("Downloading your custom trained qwen-cyber-q4.gguf file...")
 model_path = hf_hub_download(
-    repo_id="Lowkey333/cyberguard",
+    repo_id="Lowkey333/cyberguard",  # Change to "Lowkey333/qwen-cyber-custom" if needed!
     filename="qwen-cyber-q4.gguf",
     token=hf_token
 )
-
 # 3. Initialize the pre-installed local engine with your file
 print("Loading model weights into memory...")
 llm = Llama(model_path=model_path, n_ctx=512)
