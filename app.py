@@ -1,3 +1,5 @@
+import gc
+gc.collect()
 import os
 import gradio as gr
 from huggingface_hub import hf_hub_download
@@ -11,7 +13,15 @@ model_path = hf_hub_download(
     token=hf_token
 )
 
-llm = Llama(model_path=model_path, n_ctx=512, n_threads=4, n_batch=16)
+llm = Llama(
+    model_path=model_path,
+    n_ctx=256,
+    n_threads=2,
+    n_batch=8,
+    use_mmap=True,
+    use_mlock=False,
+    verbose=False
+)
 
 def chat(system_prompt, user_message):
     prompt = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{user_message}<|im_end|>\n<|im_start|>assistant\n"
