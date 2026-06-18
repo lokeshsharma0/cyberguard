@@ -8,8 +8,9 @@ hf_token = os.environ.get("HF_TOKEN")
 
 # 2. Download directly from your training repo
 # NOTE: If your trained model is in another repo, change "cyberguard" to "qwen-cyber-custom" or "qwen-cyber-expert"
+# Update this line to pull from your separate weights repository
 model_path = hf_hub_download(
-    repo_id="Lowkey333/cyberguard", 
+    repo_id="Lowkey333/cyberguard-weights", 
     filename="qwen-cyber-q4.gguf",
     token=hf_token
 )
