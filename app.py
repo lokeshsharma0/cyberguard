@@ -1,14 +1,13 @@
-import gradio as gr
-from transformers import AutoTokenizer, AutoModelForCausalLM
 import os
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# 1. Read the built-in token that Hugging Face Spaces automatically provide
+# 1. This reads the secret you just saved in the Space settings panel
 hf_token = os.environ.get("HF_TOKEN")
 
-# 2. Define the exact model path (Make sure CYBERGUARD capitalization matches your model repo name!)
+# 2. Make sure spelling matches your model repo exactly
 MODEL_ID = "Lowkey333/cyberguard" 
 
-# 3. Load Tokenizer and Model securely
+# 3. Load with the token parameter included
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=hf_token)
 model = AutoModelForCausalLM.from_pretrained(MODEL_ID, token=hf_token)
 
